@@ -39,7 +39,7 @@ class Board:
         self.aceSlots = [[Card("H", "", True)], [Card("D", "", True)], [Card("C", "", True)], [Card("S", "", True)]]
 
         # columns that hold stacks of cards
-        self.columns = [None, None, None, None, None, None, None]
+        self.columns = [[], [], [], [], [], [], []]
 
     # creates a new game
     def newGame(self):
@@ -48,7 +48,7 @@ class Board:
         self.deck = getNewDeck()
 
         # shuffle the deck
-        shuffle(self.deck)
+        self.deck = shuffleDeck(self.deck)
 
         # iterate through the columns
         for cardsInEachStack in range(1, 8):
@@ -71,8 +71,151 @@ class Board:
     # starts the game
     def startGame(self):
 
+        # saves what is selected
+        selected = None
+
+        # the coordinates of outline/cursor
+        cursorCoordinates = [0, 0]
+
+        # game loop
         while True:
-            pass
+
+            # pressed OK
+            if keydown("KEY_OK"):
+
+                # you are selecting something
+                if selected is None:
+
+                    # save selected
+                    selected = self.columns[cursorCoordinates[0]][cursorCoordinates[1]:]
+
+                    # remember where the selection is
+                    selectedCoordinates = cursorCoordinates.copy()
+
+                    # outline what you have selected
+                    outLine(cursorCoordinates[0], cursorCoordinates[1], len(self.columns[cursorCoordinates[0]]) - 1, selectedColor)
+
+                # you are trying to move what you have selected to the current location
+                else:
+
+                    # can move "selected" to that location
+                    if selected[0].cardColor[0] > 150 > self.columns[cursorCoordinates[0]][cursorCoordinates[1]:][0].cardColor[0] \
+                            or selected[0].cardColor[0] < 150 < self.columns[cursorCoordinates[0]][cursorCoordinates[1]:][0].cardColor[0]:
+
+                        # remove selected outline
+                        outLine(selectedCoordinates[0], selectedCoordinates[1],
+                                len(self.columns[cursorCoordinates[0]]) - 1, gameBackgroundColor)
+
+                        # remove the card(s) that you have selected
+                        fill_rect(startX + (selectedCoordinates[0] * horizontalSpacing), startY + (selectedCoordinates[1] * verticalSpacing),
+                                  horizontalWidthOfCard, 222, gameBackgroundColor)
+
+                        # add the cards in the spot where you selected
+                        displaySingleStack(startX + (cursorCoordinates[0] * horizontalSpacing), startY + (cursorCoordinates[1] * verticalSpacing), selected)
+
+                        # remove the selected cards from the columns
+                        del self.columns[selectedCoordinates[0]][selectedCoordinates[1]:]
+
+                        # add selected cards to the appropriate location in columns
+                        for item in selected:
+                            self.columns[cursorCoordinates[0]].append(item)
+
+                        # stop selecting
+                        selected = None
+
+            # wants to move cursor down
+            elif keydown("KEY_DOWN"):
+
+                # not already at the bottom of current stack
+                if len(self.columns[cursorCoordinates[0]]) - 1 != cursorCoordinates[1]:
+
+                    # remove old outline
+                    outLine(cursorCoordinates[0], cursorCoordinates[1],
+                            len(self.columns[cursorCoordinates[0]]) - 1, gameBackgroundColor)
+
+                    # move cursor down
+                    cursorCoordinates[1] -= 1
+
+                    # create new outline
+                    outLine(cursorCoordinates[0], cursorCoordinates[1],
+                            len(self.columns[cursorCoordinates[0]]) - 1, notSelectedOutlineColor)
+
+            # wants to move cursor up
+            elif keydown("KEY_UP"):
+
+                # not already at the top of current stack
+                if cursorCoordinates[1] != 0:
+
+                    # remove old outline
+                    outLine(cursorCoordinates[0], cursorCoordinates[1],
+                            len(self.columns[cursorCoordinates[0]]) - 1, gameBackgroundColor)
+
+                    # move cursor up
+                    cursorCoordinates[1] += 1
+
+                    # create new outline
+                    outLine(cursorCoordinates[0], cursorCoordinates[1],
+                            len(self.columns[cursorCoordinates[0]]) - 1, notSelectedOutlineColor)
+
+            # wants to move cursor right
+            elif keydown("KEY_RIGHT"):
+
+                # not already at the far right
+                if cursorCoordinates[0] != 6:
+
+                    # at least one column to the right has cards
+                    if self.columns[cursorCoordinates[0]][cursorCoordinates[1] + 1:].count([])\
+                            != len(self.columns[cursorCoordinates[0]][cursorCoordinates[1] + 1:]):
+
+                        # remove old outline
+                        outLine(cursorCoordinates[0], cursorCoordinates[1],
+                                len(self.columns[cursorCoordinates[0]]) - 1, gameBackgroundColor)
+
+                        # what is added to the x axis index of cursorCoordinates
+                        addToXIndex = 1
+
+                        # find the closest column (going right) that has cards
+                        while self.columns[cursorCoordinates[0]+addToXIndex][cursorCoordinates[1]] is []:
+
+                            # next column over
+                            addToXIndex += 1
+
+                        # move cursor over to the right
+                        cursorCoordinates[0] += addToXIndex
+
+                        # create new outline
+                        outLine(cursorCoordinates[0], cursorCoordinates[1],
+                                len(self.columns[cursorCoordinates[0]]) - 1, notSelectedOutlineColor)
+
+            # wants to move cursor to the left
+            elif keydown("KEY_LEFT"):
+
+                # not already at the far left
+                if cursorCoordinates[0] != 0:
+
+                    # at least one column to the left has cards
+                    if self.columns[cursorCoordinates[0]][:cursorCoordinates[1]].count([]) \
+                            != len(self.columns[cursorCoordinates[0]][:cursorCoordinates[1]]):
+
+                        # remove old outline
+                        outLine(cursorCoordinates[0], cursorCoordinates[1],
+                                len(self.columns[cursorCoordinates[0]]) - 1, gameBackgroundColor)
+
+                        # what is added to the x axis index of cursorCoordinates
+                        addToXIndex = -1
+
+                        # find the closest column (going left) that has cards
+                        while self.columns[cursorCoordinates[0] + addToXIndex][cursorCoordinates[1]] is []:
+
+                            # next column over
+                            addToXIndex -= 1
+
+                        # move cursor over to the left
+                        cursorCoordinates[0] += addToXIndex
+
+                        # create new outline
+                        outLine(cursorCoordinates[0], cursorCoordinates[1],
+                                len(self.columns[cursorCoordinates[0]]) - 1, notSelectedOutlineColor)
 
 
 # returns a list of new cards
@@ -346,13 +489,37 @@ def displaySpade(x, y):
     fill_rect(x + 3, y + 8, 3, 1, spadesColor)
 
 
+# shuffles a list and returns the shuffled one
+def shuffleDeck(mixMe):
+
+    # the cards that haven't been added to the new list
+    haveNotPicked = mixMe.copy()
+
+    # list of shuffled cards
+    shuffledList = []
+
+    # at least one card hasn't been used yet
+    while haveNotPicked:
+
+        # pick a random card from those that haven't already been picked, remove that card from the list of not been picked
+        shuffledList.append(haveNotPicked.pop(randint(0, len(haveNotPicked)-1)))
+
+    # return the shuffled deck
+    return shuffledList
+
+
+# a place holder function until we put it on the calculator
+def keydown(string):
+    pass
+
+
 startX = 10
 startY = 10
 
 drawPileX = 265
 drawPileY = 10
 
-aceSpacingY = 50
+aceSpacingY = 80
 
 verticalSpacing = 17
 horizontalSpacing = 32
@@ -368,10 +535,13 @@ ySpaceForIcons = 3
 cardNotFlippedColor = (92, 177, 243)
 gameBackgroundColor = (72, 176, 74)
 
-diamondsColor = (187, 45, 38)
-heartsColor = (239, 80, 80)
+diamondsColor = (239, 80, 80)
+heartsColor = (187, 45, 38)
 spadesColor = (47, 58, 87)
 clubsColor = (22, 22, 36)
+
+selectedColor = (0, 255, 0)
+notSelectedOutlineColor = (0, 0, 0)
 
 baseCardColor = (200, 200, 200)
 
