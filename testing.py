@@ -1,6 +1,6 @@
-from random import *
-from kandinsky import *
-from ion import *
+from random import randint
+from kandinsky import fill_rect, draw_string
+from ion import keydown
 
 
 # class of playing cards
@@ -59,11 +59,15 @@ class Board:
 
             # add cards for the amount needed in each stack (column)
             for singleCard in range(cardsInEachStack):
+
                 # remove a card from the deck and add it to the column
                 thisColumn.append(self.deck.pop(0))
 
             # flip the card on the top of the pile so you can see what it says
             thisColumn[-1].showInfo = True
+
+            for i in range(len(thisColumn)):
+                thisColumn[i].showInfo = True
 
             # add the stack of cards to the columns on the board
             self.columns[cardsInEachStack - 1] = thisColumn
@@ -71,8 +75,8 @@ class Board:
     # starts the game
     def startGame(self):
 
-        # saves what is selected
-        selected = None
+        # coordinates of what is selected
+        selectedCoordinates = None
 
         # the coordinates of outline/cursor
         cursorCoordinates = [6, 3]
@@ -99,10 +103,12 @@ class Board:
                 keyOk = False
 
                 # you are selecting something
-                if selected is None:
+                if not selectedCoordinates:
 
-                    # save selected
-                    selected = self.columns[cursorCoordinates[0]][cursorCoordinates[1]:]
+                    # trying to select a card that has not been flipped
+                    if self.columns[selectedCoordinates[0]][selectedCoordinates[1]].showInfo is False:
+                        selectedCoordinates = None
+                        continue
 
                     # remember where the selection is
                     selectedCoordinates = cursorCoordinates.copy()
@@ -113,34 +119,39 @@ class Board:
 
                 # you are trying to move what you have selected to the current location
                 else:
+                    # puts selected card at the same y coord that it was before not at the bottom of new stack
 
-                    # can move "selected" to that location
-                    if selected[0].cardColor[0] > 150 > \
-                            self.columns[cursorCoordinates[0]][cursorCoordinates[1]:][0].cardColor[0] \
-                            or selected[0].cardColor[0] < 150 < \
-                            self.columns[cursorCoordinates[0]][cursorCoordinates[1]:][0].cardColor[0]:
+                    # can move "selected" to that location based on color
+                    if self.columns[selectedCoordinates[0]][selectedCoordinates[1]].cardColor[0] > 150 > \
+                            self.columns[cursorCoordinates[0]][cursorCoordinates[1]].cardColor[0] \
+                            or self.columns[selectedCoordinates[0]][selectedCoordinates[1]].cardColor[0] < 150 < \
+                            self.columns[cursorCoordinates[0]][cursorCoordinates[1]].cardColor[0]:
 
-                        # remove selected outline
-                        outLine(selectedCoordinates[0], selectedCoordinates[1],
-                                len(self.columns[cursorCoordinates[0]]) - 1, gameBackgroundColor)
+                        # can move "selected" based on number
+                        if self.columns[selectedCoordinates[0]][selectedCoordinates[1]].number == self.columns[cursorCoordinates[0]][-1].number - 1:
 
-                        # remove the card(s) that you have selected
-                        fill_rect(startX + (selectedCoordinates[0] * horizontalSpacing),
-                                  startY + (selectedCoordinates[1] * verticalSpacing),
-                                  horizontalWidthOfCard, 222, gameBackgroundColor)
+                            # remove the card(s) that you have selected
+                            fill_rect(startX + (selectedCoordinates[0] * horizontalSpacing),
+                                      startY + (selectedCoordinates[1] * verticalSpacing),
+                                      horizontalWidthOfCard, 222, gameBackgroundColor)
 
-                        # remove the selected cards from the columns
-                        del self.columns[selectedCoordinates[0]][selectedCoordinates[1]:]
+                            # add selected cards to the appropriate location in columns
+                            for item in self.columns[selectedCoordinates[0]][selectedCoordinates[1]:]:
+                                self.columns[cursorCoordinates[0]].append(item.copy())
 
-                        # add selected cards to the appropriate location in columns
-                        for item in selected:
-                            self.columns[cursorCoordinates[0]].append(item)
+                            # draw in the new stack
+                            displaySingleStack(startX + (cursorCoordinates[0] * horizontalSpacing), startY,
+                                               self.columns[cursorCoordinates[0]])
 
-                        # draw in the new stack
-                        displaySingleStack(startX + (cursorCoordinates[0] * horizontalSpacing), startY, self.columns[selectedCoordinates[0]])
+                            # remove the selected cards from the columns
+                            del self.columns[selectedCoordinates[0]][selectedCoordinates[1]:]
 
-                        # stop selecting
-                        selected = None
+                    # remove selected outline
+                    outLine(selectedCoordinates[0], selectedCoordinates[1],
+                            len(self.columns[selectedCoordinates[0]]) - 1, gameBackgroundColor)
+
+                    # stop selecting
+                    selectedCoordinates = None
 
             # wants to move cursor down
             elif not keydown(KEY_DOWN) and keyDown:
@@ -182,6 +193,7 @@ class Board:
             # wants to move cursor right
             elif not keydown(KEY_RIGHT) and keyRight:
                 keyRight = False
+
                 # not already at the far right
                 if cursorCoordinates[0] != 6:
 
@@ -268,11 +280,12 @@ def getNewDeck():
             newDeck.append(Card(type, number, False))
 
     # return filled deck
-    return newDeck
+    return tuple(i for i in newDeck)
 
 
 # displays a stack
 def displaySingleStack(x, y, stackData):
+
     # loop through each card in the stack
     for cardIndex in range(len(stackData)):
 
