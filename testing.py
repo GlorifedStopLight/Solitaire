@@ -1,39 +1,26 @@
 from random import randint
-from kandinsky import fill_rect, draw_string
-from ion import keydown
+from kandinsky import *
+from ion import *
 
 
-# class of playing cards
-class Card:
-    def __init__(self, type, number, showInfo):
+# returns a color
+def cardColor(cardType):
 
-        # the type of card ex: diamonds, spades etc
-        self.type = type
+    # diamonds
+    if cardType == -1:
+        return diamondsColor
 
-        # number of card 1-13
-        self.number = number
+    # spades
+    elif cardType == 1:
+        return spadesColor
 
-        # true -> shows the card information
-        self.showInfo = showInfo
+    # clubs
+    elif cardType == 0:
+        return clubsColor
 
-    # returns a color
-    def cardColor(self):
-
-        # diamonds
-        if self.type == -1:
-            return diamondsColor
-
-        # spades
-        elif self.type == 1:
-            return spadesColor
-
-        # clubs
-        elif self.type == 0:
-            return clubsColor
-
-        # hearts
-        elif self.type == -2:
-            return heartsColor
+    # hearts
+    elif cardType == -2:
+        return heartsColor
 
 
 # holds the information on the board
@@ -44,7 +31,7 @@ class Board:
         self.deck = None
 
         # slots where the aces go
-        self.aceSlots = [Card(-2, 0, True), Card(-1, 0, True), Card(0, 0, True), Card(1, 0, True)]
+        self.aceSlots = [(-2, 0, True), (-1, 0, True), (0, 0, True), (1, 0, True)]
 
         # a list showing how many cards are in each column
         self.cardsInEachColumn = [0, 0, 0, 0, 0, 0, 0]
@@ -70,7 +57,7 @@ class Board:
                 if singleCard + 1 == cardsInEachStack:
 
                     # flip the card at the bottom of the column
-                    self.deck[0].showInfo = True
+                    self.deck[0][2] = True
 
                 # display the card on the screen
                 displaySingleCard(startX + (horizontalSpacing * (cardsInEachStack - 1)), startY + (verticalSpacing * singleCard),
@@ -111,7 +98,7 @@ class Board:
                 if not selectedCoordinates:
 
                     # trying to select a card that has not been flipped
-                    if takeCordsGiveCard(selectedCoordinates).showInfo is False:
+                    if takeCordsGiveCard(cursorCoordinates)[2] is False:
                         selectedCoordinates = None
                         continue
 
@@ -119,17 +106,18 @@ class Board:
                     selectedCoordinates = cursorCoordinates.copy()
 
                     # outline what you have selected
-                    outLine(cursorCoordinates[0], cursorCoordinates[1], self.cardsInEachColumn[cursorCoordinates[0]],
+                    outLine(cursorCoordinates[0], cursorCoordinates[1], self.cardsInEachColumn[cursorCoordinates[0]] - 1,
                             selectedColor)
 
                 # you are trying to move what you have selected to the current location
                 else:
 
                     # can move "selected" to that location based on color
-                    if int(takeCordsGiveCard(selectedCoordinates).type * 0.5 + 1) + int(takeCordsGiveCard(cursorCoordinates).type * 0.5 + 1) == 1:
+                    if int(takeCordsGiveCard(selectedCoordinates)[0] * 0.5 + 1) + int(takeCordsGiveCard(cursorCoordinates)[0] * 0.5 + 1) == 1:
 
                         # can move "selected" based on number
-                        if takeCordsGiveCard(selectedCoordinates).number == takeCordsGiveCard([cursorCoordinates[0], -1]).number - 1:
+                        if takeCordsGiveCard(selectedCoordinates)[1] == takeCordsGiveCard([cursorCoordinates[0],
+                                                                                           self.cardsInEachColumn[cursorCoordinates[0]]-1])[1] - 1:
 
                             # loop through the selected cards
                             for cardIndex in range(self.cardsInEachColumn[selectedCoordinates[0]] - selectedCoordinates[1]):
@@ -137,7 +125,7 @@ class Board:
                                 # display the cards in the new spot
                                 displaySingleCard(startX + (cursorCoordinates[0] * horizontalSpacing),
                                                   startY + (self.cardsInEachColumn[cursorCoordinates[0]] * verticalSpacing),
-                                                  takeCordsGiveCard([selectedCoordinates[0], selectedCoordinates[1] - cardIndex]))
+                                                  takeCordsGiveCard([selectedCoordinates[0], selectedCoordinates[1] + cardIndex]))
 
                                 # add a card to the current column
                                 self.cardsInEachColumn[cursorCoordinates[0]] += 1
@@ -258,7 +246,7 @@ class Board:
 
 
 # takes the color of a card returns a card object
-def getCard(theCardColor):
+def getCard(infoColor):
     # card not displaying info -> (88-104, 180, 244)
 
     # initialize variables
@@ -267,7 +255,7 @@ def getCard(theCardColor):
     cardType = None
 
     # card is visible (200, 200, 200)
-    if theCardColor[0] >= 200:
+    if infoColor[0] >= 200:
 
         # color without special info
         normalColor = baseCardColor
@@ -281,40 +269,40 @@ def getCard(theCardColor):
         showTheInfo = False
 
     # card is red genera
-    if (theCardColor[0] - normalColor[0]) / 8 > 0:
+    if (infoColor[0] - normalColor[0]) / 8 > 0:
 
         # 1 = diamonds (-1) , 2 = hearts (-2)
-        cardType = ((theCardColor[0] - normalColor[0]) / 8) * -1
+        cardType = ((infoColor[0] - normalColor[0]) // 8) * -1
 
     # card is black genera
-    elif (theCardColor[2] - normalColor[2]) / 8 > 0:
+    elif (infoColor[2] - normalColor[2]) / 8 > 0:
 
         # 1 = clubs (0), 2 = spades (1)
-        cardType = ((theCardColor[2] - normalColor[2]) / 8) - 1
+        cardType = ((infoColor[2] - normalColor[2]) // 8) - 1
 
     # card has no type
     else:
         print("(card has no type) from getCard()")
 
     # no number
-    if (theCardColor[1] - normalColor[1]) / 4 == 0:
+    if (infoColor[1] - normalColor[1]) / 4 == 0:
         cardNumber = 0
 
     # card has number
     else:
 
         # calculate card number based on color
-        cardNumber = (theCardColor[1] - normalColor[1]) / 4
+        cardNumber = (infoColor[1] - normalColor[1]) // 4
 
     # return the card that the color represents
-    return Card(cardType, cardNumber, showTheInfo)
+    return (cardType, cardNumber, showTheInfo)
 
 
 # takes a set of coordinates calls on the getCard to get the card at given cords
 def takeCordsGiveCard(setOfCords):
 
     # get the color of the pixel at setOfCords & return it
-    return get_pixel(startX + (setOfCords[0] * horizontalSpacing), startY + (setOfCords[1] * verticalSpacing))
+    return getCard(get_pixel(startX + (setOfCords[0] * horizontalSpacing), startY + (setOfCords[1] * verticalSpacing)))
 
 
 # returns a list of new cards
@@ -328,7 +316,7 @@ def getNewDeck():
         # loop though the card numbers
         for number in range(1, 14):
             # add new card to deck
-            newDeck.append(Card(type, number, False))
+            newDeck.append([type, number, False])
 
     # list of shuffled cards
     shuffledList = []
@@ -355,32 +343,41 @@ def displaySingleStack(x, y, stackData):
 def displaySingleCard(x, y, cardData):
 
     # the information should be displayed
-    if cardData.showInfo:
+    if cardData[2]:
 
         # display information
         fill_rect(x, y, horizontalWidthOfCard, verticalHeightOfCard, baseCardColor)
-        draw_string(str(cardData.number), x, y, cardData.cardColor(), baseCardColor)
+        draw_string(str(cardData[1]), x, y, cardColor(cardData[0]), baseCardColor)
         fill_rect(x, y+verticalHeightOfCard, horizontalWidthOfCard, 3, gameBackgroundColor)
 
-        infoColor = cardData.cardColor()
+        a, b, c = baseCardColor
+
+        # red
+        if cardData[0] < 0:
+            a += abs(cardData[0]) * 8
+
+        else:
+            c += abs(cardData[2]) * 8
+
+        b += abs(cardData[1]) * 4
 
         # change color of top left pixel to have special information
-        fill_rect(x, y, 1, 1, infoColor)
+        fill_rect(x, y, 1, 1, tuple([a, b, c]))
 
         # display heart icon
-        if cardData.type == -2:
+        if cardData[0] == -2:
             displayHeart(x, y)
 
         # display diamond icon
-        elif cardData.type == -1:
+        elif cardData[0] == -1:
             displayDiamond(x, y)
 
         # display club icon
-        elif cardData.type == 0:
+        elif cardData[0] == 0:
             displayClub(x, y)
 
         # display spade icon
-        elif cardData.type == 1:
+        elif cardData[0] == 1:
             displaySpade(x, y)
 
     # just show the back of the card instead
@@ -628,7 +625,7 @@ spadesColor = (47, 58, 87)
 clubsColor = (22, 22, 36)
 
 selectedColor = (0, 255, 0)
-notSelectedOutlineColor = (0, 0, 0)
+notSelectedOutlineColor = (8, 8, 8)
 
 game = Board()
 

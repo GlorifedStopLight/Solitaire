@@ -63,7 +63,7 @@ class Board:
                 thisColumn.append(self.deck.pop(0))
 
             # flip the card on the top of the pile so you can see what it says
-            thisColumn[-1].showInfo = True
+            thisColumn[-1][2] = True
 
             # add the stack of cards to the columns on the board
             self.columns[cardsInEachStack-1] = thisColumn
@@ -244,7 +244,7 @@ def displaySingleStack(x, y, stackData):
     for cardIndex in range(len(stackData)):
 
         # the information should be displayed
-        if stackData[cardIndex].showInfo:
+        if stackData[cardIndex][2]:
 
             # display information
             fill_rect(x, y+(cardIndex * verticalSpacing), horizontalWidthOfCard, verticalHeightOfCard, baseCardColor)
