@@ -5,7 +5,7 @@ from ion import *
 
 # returns a color
 def cardColor(cardType):
-
+    print("cardType: ", cardType)
     # diamonds
     if cardType == -1:
         return diamondsColor
@@ -23,226 +23,233 @@ def cardColor(cardType):
         return heartsColor
 
 
-# holds the information on the board
-class Board:
-    def __init__(self):
+# deck of cards at the top right corner
+deck = None
 
-        # deck of cards at the top right corner
-        self.deck = None
+# slots where the aces go
+aceSlots = [(-2, 0, True), (-1, 0, True), (0, 0, True), (1, 0, True)]
 
-        # slots where the aces go
-        self.aceSlots = [(-2, 0, True), (-1, 0, True), (0, 0, True), (1, 0, True)]
+# a list showing how many cards are in each column
+cardsInEachColumn = [0, 0, 0, 0, 0, 0, 0]
 
-        # a list showing how many cards are in each column
-        self.cardsInEachColumn = [0, 0, 0, 0, 0, 0, 0]
 
-    # creates a new game
-    def newGame(self):
+# creates a new game
+def newGame():
 
-        # get a deck of cards
-        self.deck = getNewDeck()
+    # get a deck of cards
+    deck = getNewDeck()
 
-        displayBoard(self)
+    displayBoard(deck, aceSlots)
 
-        # iterate through the columns
-        for cardsInEachStack in range(1, 8):
+    # iterate through the columns
+    for cardsInEachStack in range(1, 8):
 
-            # add cards for the amount needed in each stack (column)
-            for singleCard in range(cardsInEachStack):
+        # add cards for the amount needed in each stack (column)
+        for singleCard in range(cardsInEachStack):
 
-                # add a card to the current column
-                self.cardsInEachColumn[cardsInEachStack - 1] += 1
+            # add a card to the current column
+            cardsInEachColumn[cardsInEachStack - 1] += 1
 
-                # last card in this column
-                if singleCard + 1 == cardsInEachStack:
+            # last card in this column
+            if singleCard + 1 == cardsInEachStack:
 
-                    # flip the card at the bottom of the column
-                    self.deck[0][2] = True
+                # flip the card at the bottom of the column
+                deck[0][2] = True
 
-                # display the card on the screen
-                displaySingleCard(startX + (horizontalSpacing * (cardsInEachStack - 1)), startY + (verticalSpacing * singleCard),
-                                  self.deck.pop(0))
+            # display the card on the screen
+            displaySingleCard(startX + (horizontalSpacing * (cardsInEachStack - 1)), startY + (verticalSpacing * singleCard),
+                              deck.pop(0))
 
-    # starts the game
-    def startGame(self):
 
-        # coordinates of what is selected
-        selectedCoordinates = None
+# starts the game
+def startGame():
 
-        # the coordinates of outline/cursor
-        cursorCoordinates = [6, 3]
+    # coordinates of what is selected
+    selectedCoordinates = None
 
-        # key was down or not
-        keyOk = keyDown = keyUp = keyRight = keyLeft = False
+    # the coordinates of outline/cursor
+    cursorCoordinates = [6, 3]
 
-        # game loop
-        while True:
+    # key was down or not
+    keyOk = keyDown = keyUp = keyRight = keyLeft = False
 
-            if keydown(KEY_OK):
-                keyOk = True
-            elif keydown(KEY_UP):
-                keyUp = True
-            elif keydown(KEY_DOWN):
-                keyDown = True
-            elif keydown(KEY_RIGHT):
-                keyRight = True
-            elif keydown(KEY_LEFT):
-                keyLeft = True
+    # game loop
+    while True:
 
-            # pressed OK
-            if not keydown(KEY_OK) and keyOk:
+        if keydown(KEY_OK):
+            keyOk = True
+        elif keydown(KEY_UP):
+            keyUp = True
+        elif keydown(KEY_DOWN):
+            keyDown = True
+        elif keydown(KEY_RIGHT):
+            keyRight = True
+        elif keydown(KEY_LEFT):
+            keyLeft = True
 
-                keyOk = False
+        # pressed OK
+        if not keydown(KEY_OK) and keyOk:
 
-                # you are selecting something
-                if not selectedCoordinates:
+            keyOk = False
 
-                    # trying to select a card that has not been flipped
-                    if takeCordsGiveCard(cursorCoordinates)[2] is False:
-                        selectedCoordinates = None
-                        continue
+            # you are selecting something
+            if not selectedCoordinates:
 
-                    # remember where the selection is
-                    selectedCoordinates = cursorCoordinates.copy()
-
-                    # outline what you have selected
-                    outLine(cursorCoordinates[0], cursorCoordinates[1], self.cardsInEachColumn[cursorCoordinates[0]] - 1,
-                            selectedColor)
-
-                # you are trying to move what you have selected to the current location
-                else:
-
-                    # can move "selected" to that location based on color
-                    if int(takeCordsGiveCard(selectedCoordinates)[0] * 0.5 + 1) + int(takeCordsGiveCard(cursorCoordinates)[0] * 0.5 + 1) == 1:
-
-                        # can move "selected" based on number
-                        if takeCordsGiveCard(selectedCoordinates)[1] == takeCordsGiveCard([cursorCoordinates[0],
-                                                                                           self.cardsInEachColumn[cursorCoordinates[0]]-1])[1] - 1:
-
-                            # loop through the selected cards
-                            for cardIndex in range(self.cardsInEachColumn[selectedCoordinates[0]] - selectedCoordinates[1]):
-
-                                # display the cards in the new spot
-                                displaySingleCard(startX + (cursorCoordinates[0] * horizontalSpacing),
-                                                  startY + (self.cardsInEachColumn[cursorCoordinates[0]] * verticalSpacing),
-                                                  takeCordsGiveCard([selectedCoordinates[0], selectedCoordinates[1] + cardIndex]))
-
-                                # add a card to the current column
-                                self.cardsInEachColumn[cursorCoordinates[0]] += 1
-
-                            # remove the card(s) that you have selected
-                            fill_rect(startX + (selectedCoordinates[0] * horizontalSpacing),
-                                      startY + (selectedCoordinates[1] * verticalSpacing),
-                                      horizontalWidthOfCard, 222, gameBackgroundColor)
-
-                    # remove selected outline
-                    outLine(selectedCoordinates[0], selectedCoordinates[1],
-                            self.cardsInEachColumn[selectedCoordinates[0]] - 1, gameBackgroundColor)
-
-                    # stop selecting
+                # trying to select a card that has not been flipped
+                if takeCordsGiveCard(cursorCoordinates)[2] is False:
                     selectedCoordinates = None
+                    continue
 
-            # wants to move cursor down
-            elif not keydown(KEY_DOWN) and keyDown:
+                # remember where the selection is
+                selectedCoordinates = cursorCoordinates.copy()
 
-                keyDown = False
+                # outline what you have selected
+                outLine(cursorCoordinates[0], cursorCoordinates[1], cardsInEachColumn[cursorCoordinates[0]] - 1,
+                        selectedColor)
 
-                # not already at the bottom of current stack
-                if self.cardsInEachColumn[cursorCoordinates[0]] - 1 != cursorCoordinates[1]:
+            # you are trying to move what you have selected to the current location
+            else:
 
-                    # remove old outline
-                    outLine(cursorCoordinates[0], cursorCoordinates[1],
-                            self.cardsInEachColumn[cursorCoordinates[0]] - 1, gameBackgroundColor)
+                # can move "selected" to that location based on color
+                if int(takeCordsGiveCard(selectedCoordinates)[0] * 0.5 + 1) + int(takeCordsGiveCard(cursorCoordinates)[0] * 0.5 + 1) == 1:
 
-                    # move cursor down
-                    cursorCoordinates[1] += 1
+                    # can move "selected" based on number
+                    if takeCordsGiveCard(selectedCoordinates)[1] == takeCordsGiveCard([cursorCoordinates[0],
+                                                                                       cardsInEachColumn[cursorCoordinates[0]]-1])[1] - 1:
 
-                    # create new outline
-                    outLine(cursorCoordinates[0], cursorCoordinates[1],
-                            self.cardsInEachColumn[cursorCoordinates[0]] - 1, notSelectedOutlineColor)
+                        # loop through the selected cards
+                        for cardIndex in range(cardsInEachColumn[selectedCoordinates[0]] - selectedCoordinates[1]):
 
-            # wants to move cursor up
-            elif not keydown(KEY_UP) and keyUp:
-                keyUp = False
+                            # display the cards in the new spot
+                            displaySingleCard(startX + (cursorCoordinates[0] * horizontalSpacing),
+                                              startY + (cardsInEachColumn[cursorCoordinates[0]] * verticalSpacing),
+                                              takeCordsGiveCard([selectedCoordinates[0], selectedCoordinates[1] + cardIndex]))
 
-                # not already at the top of current stack
-                if cursorCoordinates[1] != 0:
+                            # add a card to the current column
+                            cardsInEachColumn[cursorCoordinates[0]] += 1
+                            cardsInEachColumn[selectedCoordinates[0]] -= 1
 
-                    # remove old outline
-                    outLine(cursorCoordinates[0], cursorCoordinates[1],
-                            self.cardsInEachColumn[cursorCoordinates[0]] - 1, gameBackgroundColor)
+                        # remove the card(s) that you have selected
+                        fill_rect(startX + (selectedCoordinates[0] * horizontalSpacing),
+                                  startY + (selectedCoordinates[1] * verticalSpacing),
+                                  horizontalWidthOfCard, 222, gameBackgroundColor)
 
-                    # move cursor up
-                    cursorCoordinates[1] -= 1
+                # remove selected outline
+                outLine(selectedCoordinates[0], selectedCoordinates[1],
+                        cardsInEachColumn[selectedCoordinates[0]] - 1, gameBackgroundColor)
 
-                    # create new outline
-                    outLine(cursorCoordinates[0], cursorCoordinates[1],
-                            self.cardsInEachColumn[cursorCoordinates[0]] - 1, notSelectedOutlineColor)
+                # the selection didn't take the last card in the stack
+                if selectedCoordinates[1] > 0:
 
-            # wants to move cursor right
-            elif not keydown(KEY_RIGHT) and keyRight:
-                keyRight = False
+                    cardToFlip = takeCordsGiveCard([selectedCoordinates[0], selectedCoordinates[1] - 1])
+                    cardToFlip[2] = True
 
-                # at least one column to the right has cards
-                if cursorCoordinates[0] != 6 and any(self.cardsInEachColumn[cursorCoordinates[0] + 1:]):
+                    displaySingleCard(startX + (selectedCoordinates[0] * horizontalSpacing), startY + (verticalSpacing * (selectedCoordinates[1] - 1)), cardToFlip)
 
-                    # remove old outline
-                    outLine(cursorCoordinates[0], cursorCoordinates[1],
-                            self.cardsInEachColumn[cursorCoordinates[0]] - 1, gameBackgroundColor)
+                # stop selecting
+                selectedCoordinates = None
 
-                    # what is added to the x axis index of cursorCoordinates
-                    addToXIndex = 1
+        # wants to move cursor down
+        elif not keydown(KEY_DOWN) and keyDown:
 
-                    # find the closest column (going right) that has cards
-                    while self.cardsInEachColumn[cursorCoordinates[0] + addToXIndex] == 0:
+            keyDown = False
 
-                        # next column over
-                        addToXIndex += 1
+            # not already at the bottom of current stack
+            if cardsInEachColumn[cursorCoordinates[0]] - 1 != cursorCoordinates[1]:
 
-                    # move cursor over to the right
-                    cursorCoordinates[0] += addToXIndex
+                # remove old outline
+                outLine(cursorCoordinates[0], cursorCoordinates[1],
+                        cardsInEachColumn[cursorCoordinates[0]] - 1, gameBackgroundColor)
 
-                    # there are no cards in that column in the row we are on
-                    if self.cardsInEachColumn[cursorCoordinates[0]] - 1 < cursorCoordinates[1]:
+                # move cursor down
+                cursorCoordinates[1] += 1
 
-                        # move down to the top card in the column we moved to
-                        cursorCoordinates[1] = self.cardsInEachColumn[cursorCoordinates[0]] - 1
+                # create new outline
+                outLine(cursorCoordinates[0], cursorCoordinates[1],
+                        cardsInEachColumn[cursorCoordinates[0]] - 1, notSelectedOutlineColor)
 
-                    # create new outline
-                    outLine(cursorCoordinates[0], cursorCoordinates[1],
-                            self.cardsInEachColumn[cursorCoordinates[0]] - 1, notSelectedOutlineColor)
+        # wants to move cursor up
+        elif not keydown(KEY_UP) and keyUp:
+            keyUp = False
 
-            # wants to move cursor to the left
-            elif not keydown(KEY_LEFT) and keyLeft:
-                keyLeft = False
+            # not already at the top of current stack
+            if cursorCoordinates[1] != 0:
 
-                # not already at the far left and at least one column has cards
-                if cursorCoordinates[0] != 0 and any(self.cardsInEachColumn[:cursorCoordinates[0]]):
+                # remove old outline
+                outLine(cursorCoordinates[0], cursorCoordinates[1],
+                        cardsInEachColumn[cursorCoordinates[0]] - 1, gameBackgroundColor)
 
-                    # remove old outline
-                    outLine(cursorCoordinates[0], cursorCoordinates[1],
-                            self.cardsInEachColumn[cursorCoordinates[0]] - 1, gameBackgroundColor)
+                # move cursor up
+                cursorCoordinates[1] -= 1
 
-                    # what is added to the x axis index of cursorCoordinates
-                    addToXIndex = -1
+                # create new outline
+                outLine(cursorCoordinates[0], cursorCoordinates[1],
+                        cardsInEachColumn[cursorCoordinates[0]] - 1, notSelectedOutlineColor)
 
-                    # find the closest column (going left) that has cards
-                    while self.cardsInEachColumn[cursorCoordinates[0] + addToXIndex] == 0:
-                        # next column over
-                        addToXIndex -= 1
+        # wants to move cursor right
+        elif not keydown(KEY_RIGHT) and keyRight:
+            keyRight = False
 
-                    # move cursor over to the left
-                    cursorCoordinates[0] += addToXIndex
+            # at least one column to the right has cards
+            if cursorCoordinates[0] != 6 and any(cardsInEachColumn[cursorCoordinates[0] + 1:]):
 
-                    # there are no cards in that column in the row we are on
-                    if self.cardsInEachColumn[cursorCoordinates[0]] - 1 < cursorCoordinates[1]:
+                # remove old outline
+                outLine(cursorCoordinates[0], cursorCoordinates[1],
+                        cardsInEachColumn[cursorCoordinates[0]] - 1, gameBackgroundColor)
 
-                        # move down to the top card in the column we moved to
-                        cursorCoordinates[1] = self.cardsInEachColumn[cursorCoordinates[0]] - 1
+                # what is added to the x axis index of cursorCoordinates
+                addToXIndex = 1
 
-                    # create new outline
-                    outLine(cursorCoordinates[0], cursorCoordinates[1],
-                            self.cardsInEachColumn[cursorCoordinates[0]] - 1, notSelectedOutlineColor)
+                # find the closest column (going right) that has cards
+                while cardsInEachColumn[cursorCoordinates[0] + addToXIndex] == 0:
+
+                    # next column over
+                    addToXIndex += 1
+
+                # move cursor over to the right
+                cursorCoordinates[0] += addToXIndex
+
+                # there are no cards in that column in the row we are on
+                if cardsInEachColumn[cursorCoordinates[0]] - 1 < cursorCoordinates[1]:
+
+                    # move down to the top card in the column we moved to
+                    cursorCoordinates[1] = cardsInEachColumn[cursorCoordinates[0]] - 1
+
+                # create new outline
+                outLine(cursorCoordinates[0], cursorCoordinates[1],
+                        cardsInEachColumn[cursorCoordinates[0]] - 1, notSelectedOutlineColor)
+
+        # wants to move cursor to the left
+        elif not keydown(KEY_LEFT) and keyLeft:
+            keyLeft = False
+
+            # not already at the far left and at least one column has cards
+            if cursorCoordinates[0] != 0 and any(cardsInEachColumn[:cursorCoordinates[0]]):
+
+                # remove old outline
+                outLine(cursorCoordinates[0], cursorCoordinates[1],
+                        cardsInEachColumn[cursorCoordinates[0]] - 1, gameBackgroundColor)
+
+                # what is added to the x axis index of cursorCoordinates
+                addToXIndex = -1
+
+                # find the closest column (going left) that has cards
+                while cardsInEachColumn[cursorCoordinates[0] + addToXIndex] == 0:
+                    # next column over
+                    addToXIndex -= 1
+
+                # move cursor over to the left
+                cursorCoordinates[0] += addToXIndex
+
+                # there are no cards in that column in the row we are on
+                if cardsInEachColumn[cursorCoordinates[0]] - 1 < cursorCoordinates[1]:
+
+                    # move down to the top card in the column we moved to
+                    cursorCoordinates[1] = cardsInEachColumn[cursorCoordinates[0]] - 1
+
+                # create new outline
+                outLine(cursorCoordinates[0], cursorCoordinates[1],
+                        cardsInEachColumn[cursorCoordinates[0]] - 1, notSelectedOutlineColor)
 
 
 # takes the color of a card returns a card object
@@ -295,7 +302,7 @@ def getCard(infoColor):
         cardNumber = (infoColor[1] - normalColor[1]) // 4
 
     # return the card that the color represents
-    return (cardType, cardNumber, showTheInfo)
+    return [cardType, cardNumber, showTheInfo]
 
 
 # takes a set of coordinates calls on the getCard to get the card at given cords
@@ -356,6 +363,7 @@ def displaySingleCard(x, y, cardData):
         if cardData[0] < 0:
             a += abs(cardData[0]) * 8
 
+        # black
         else:
             c += abs(cardData[2]) * 8
 
@@ -385,6 +393,20 @@ def displaySingleCard(x, y, cardData):
 
         # display back of card
         fill_rect(x, y, horizontalWidthOfCard, verticalHeightOfCard, cardNotFlippedColor)
+
+        a, b, c = cardNotFlippedColor
+
+        # red
+        if cardData[0] < 0:
+            a += abs(cardData[0]) * 8
+
+        # black
+        else:
+            c += abs(cardData[2]) * 8
+
+        b += abs(cardData[1]) * 4
+
+        fill_rect(x, y, 1, 1, [a, b, c])
 
 
 # displays the ace piles
@@ -418,15 +440,15 @@ def displayDrawPile(pile):
 
 
 # displays everything on board
-def displayBoard(gameInfo):
+def displayBoard(deckInfo, aceInfo):
     # color the background
     fill_rect(0, 0, 320, 222, gameBackgroundColor)
 
     # display draw pile
-    displayDrawPile(gameInfo.deck)
+    displayDrawPile(deckInfo)
 
     # display the ace piles
-    displayAceStacks(gameInfo.aceSlots)
+    displayAceStacks(aceInfo)
 
 
 # creates an outline
@@ -627,8 +649,5 @@ clubsColor = (22, 22, 36)
 selectedColor = (0, 255, 0)
 notSelectedOutlineColor = (8, 8, 8)
 
-game = Board()
-
-game.newGame()
-
-game.startGame()
+newGame()
+startGame()
