@@ -5,7 +5,6 @@ from ion import *
 
 # returns a color
 def cardColor(cardType):
-    print("cardType: ", cardType)
     # diamonds
     if cardType == -1:
         return diamondsColor
@@ -110,6 +109,18 @@ def startGame():
             # you are trying to move what you have selected to the current location
             else:
 
+                # trying to put what you have where it is it does nothing, next iteration
+                if selectedCoordinates == cursorCoordinates:
+
+                    # remove selected outline
+                    outLine(selectedCoordinates[0], selectedCoordinates[1],
+                            cardsInEachColumn[selectedCoordinates[0]] - 1, gameBackgroundColor)
+
+                    # stop selecting
+                    selectedCoordinates = None
+
+                    continue
+
                 # can move "selected" to that location based on color
                 if int(takeCordsGiveCard(selectedCoordinates)[0] * 0.5 + 1) + int(takeCordsGiveCard(cursorCoordinates)[0] * 0.5 + 1) == 1:
 
@@ -139,12 +150,12 @@ def startGame():
                         cardsInEachColumn[selectedCoordinates[0]] - 1, gameBackgroundColor)
 
                 # the selection didn't take the last card in the stack
-                if selectedCoordinates[1] > 0:
+                #if selectedCoordinates[1] > 0:
 
-                    cardToFlip = takeCordsGiveCard([selectedCoordinates[0], selectedCoordinates[1] - 1])
-                    cardToFlip[2] = True
+                    #cardToFlip = takeCordsGiveCard([selectedCoordinates[0], selectedCoordinates[1] - 1])
+                    #cardToFlip[2] = True
 
-                    displaySingleCard(startX + (selectedCoordinates[0] * horizontalSpacing), startY + (verticalSpacing * (selectedCoordinates[1] - 1)), cardToFlip)
+                    #displaySingleCard(startX + (selectedCoordinates[0] * horizontalSpacing), startY + (verticalSpacing * (selectedCoordinates[1] - 1)), cardToFlip)
 
                 # stop selecting
                 selectedCoordinates = None
@@ -290,6 +301,7 @@ def getCard(infoColor):
     # card has no type
     else:
         print("(card has no type) from getCard()")
+        print("color:", infoColor)
 
     # no number
     if (infoColor[1] - normalColor[1]) / 4 == 0:
@@ -351,26 +363,25 @@ def displaySingleCard(x, y, cardData):
 
     # the information should be displayed
     if cardData[2]:
-
         # display information
         fill_rect(x, y, horizontalWidthOfCard, verticalHeightOfCard, baseCardColor)
         draw_string(str(cardData[1]), x, y, cardColor(cardData[0]), baseCardColor)
         fill_rect(x, y+verticalHeightOfCard, horizontalWidthOfCard, 3, gameBackgroundColor)
 
-        a, b, c = baseCardColor
+        chosenColor = list(baseCardColor)
 
-        # red
+        # red -2, -1
         if cardData[0] < 0:
-            a += abs(cardData[0]) * 8
+            chosenColor[0] += (abs(cardData[0]) * 8)
 
-        # black
+        # black 0, 1
         else:
-            c += abs(cardData[2]) * 8
+            chosenColor[2] += (abs(cardData[0]) + 1) * 8
 
-        b += abs(cardData[1]) * 4
+        chosenColor[1] += abs(cardData[1]) * 4
 
         # change color of top left pixel to have special information
-        fill_rect(x, y, 1, 1, tuple([a, b, c]))
+        fill_rect(x, y, 1, 1, chosenColor)
 
         # display heart icon
         if cardData[0] == -2:
@@ -394,23 +405,23 @@ def displaySingleCard(x, y, cardData):
         # display back of card
         fill_rect(x, y, horizontalWidthOfCard, verticalHeightOfCard, cardNotFlippedColor)
 
-        a, b, c = cardNotFlippedColor
+        chosenColor = list(cardNotFlippedColor)
 
-        # red
+        # red -1, -2
         if cardData[0] < 0:
-            a += abs(cardData[0]) * 8
+            chosenColor[0] += abs(cardData[0]) * 8
 
-        # black
+        # black 1, 0
         else:
-            c += abs(cardData[2]) * 8
+            chosenColor[2] += (abs(cardData[0]) + 1) * 8
 
-        b += abs(cardData[1]) * 4
-
-        fill_rect(x, y, 1, 1, [a, b, c])
+        chosenColor[1] += abs(cardData[1]) * 4
+        fill_rect(x, y, 1, 1, chosenColor)
 
 
 # displays the ace piles
 def displayAceStacks(stackData):
+    aceSpacingY = 80
     x = drawPileX
     y = drawPileY + aceSpacingY
 
@@ -624,8 +635,6 @@ startY = 10
 drawPileX = 265
 drawPileY = 10
 
-aceSpacingY = 80
-
 verticalSpacing = 17
 horizontalSpacing = 32
 
@@ -637,7 +646,7 @@ outLineWidth = 2
 xSpaceForIcons = 20
 ySpaceForIcons = 3
 
-cardNotFlippedColor = (88, 180, 244)
+cardNotFlippedColor = (88, 180, 232)
 gameBackgroundColor = (72, 176, 72)
 baseCardColor = (200, 200, 200)
 
