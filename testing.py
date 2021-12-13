@@ -2,29 +2,6 @@ from random import randint
 from kandinsky import *
 from ion import *
 
-
-# returns a color
-def cardColor(cardType):
-    # diamonds
-    if cardType == -1:
-        return diamondsColor
-
-    # spades
-    elif cardType == 1:
-        return spadesColor
-
-    # clubs
-    elif cardType == 0:
-        return clubsColor
-
-    # hearts
-    elif cardType == -2:
-        return heartsColor
-
-
-# deck of cards at the top right corner
-deck = None
-
 # slots where the aces go
 aceSlots = [(-2, 0, True), (-1, 0, True), (0, 0, True), (1, 0, True)]
 
@@ -38,7 +15,14 @@ def newGame():
     # get a deck of cards
     deck = getNewDeck()
 
-    displayBoard(deck, aceSlots)
+    # color the background
+    fill_rect(0, 0, 320, 222, gameBackgroundColor)
+
+    # display draw pile
+    displayDrawPile(deck)
+
+    # display the ace piles
+    displayAceStacks(aceSlots)
 
     # iterate through the columns
     for cardsInEachStack in range(1, 8):
@@ -150,12 +134,12 @@ def startGame():
                         cardsInEachColumn[selectedCoordinates[0]] - 1, gameBackgroundColor)
 
                 # the selection didn't take the last card in the stack
-                #if selectedCoordinates[1] > 0:
+                if selectedCoordinates[1] > 0:
 
-                    #cardToFlip = takeCordsGiveCard([selectedCoordinates[0], selectedCoordinates[1] - 1])
-                    #cardToFlip[2] = True
+                    cardToFlip = takeCordsGiveCard([selectedCoordinates[0], selectedCoordinates[1] - 1])
+                    cardToFlip[2] = True
 
-                    #displaySingleCard(startX + (selectedCoordinates[0] * horizontalSpacing), startY + (verticalSpacing * (selectedCoordinates[1] - 1)), cardToFlip)
+                    displaySingleCard(startX + (selectedCoordinates[0] * horizontalSpacing), startY + (verticalSpacing * (selectedCoordinates[1] - 1)), cardToFlip)
 
                 # stop selecting
                 selectedCoordinates = None
@@ -267,9 +251,7 @@ def startGame():
 def getCard(infoColor):
     # card not displaying info -> (88-104, 180, 244)
 
-    # initialize variables
-    normalColor = None
-    cardNumber = None
+    # initialize variable
     cardType = None
 
     # card is visible (200, 200, 200)
@@ -363,9 +345,26 @@ def displaySingleCard(x, y, cardData):
 
     # the information should be displayed
     if cardData[2]:
+
+        # diamonds
+        if cardData[0] == -1:
+            cc = diamondsColor
+
+        # spades
+        elif cardData[0] == 1:
+            cc = spadesColor
+
+        # clubs
+        elif cardData[0] == 0:
+            cc = clubsColor
+
+        # hearts
+        else:
+            cc = heartsColor
+
         # display information
         fill_rect(x, y, horizontalWidthOfCard, verticalHeightOfCard, baseCardColor)
-        draw_string(str(cardData[1]), x, y, cardColor(cardData[0]), baseCardColor)
+        draw_string(str(cardData[1]), x, y, cc, baseCardColor)
         fill_rect(x, y+verticalHeightOfCard, horizontalWidthOfCard, 3, gameBackgroundColor)
 
         chosenColor = list(baseCardColor)
@@ -383,21 +382,140 @@ def displaySingleCard(x, y, cardData):
         # change color of top left pixel to have special information
         fill_rect(x, y, 1, 1, chosenColor)
 
+        x += xSpaceForIcons
+        y += ySpaceForIcons
+
         # display heart icon
         if cardData[0] == -2:
-            displayHeart(x, y)
+
+            # layer 0
+            fill_rect(x + 1, y, 2, 1, heartsColor)
+            fill_rect(x + 6, y, 2, 1, heartsColor)
+
+            # layer 1
+            fill_rect(x, y + 1, 4, 1, heartsColor)
+            fill_rect(x + 5, y + 1, 4, 1, heartsColor)
+
+            # layer 2
+            fill_rect(x, y + 2, 9, 1, heartsColor)
+
+            # layer 3
+            fill_rect(x, y + 3, 9, 1, heartsColor)
+
+            # layer 4
+            fill_rect(x, y + 4, 9, 1, heartsColor)
+
+            # layer 5
+            fill_rect(x + 1, y + 5, 7, 1, heartsColor)
+
+            # layer 6
+            fill_rect(x + 2, y + 6, 5, 1, heartsColor)
+
+            # layer 7
+            fill_rect(x + 3, y + 7, 3, 1, heartsColor)
+
+            # layer 8
+            fill_rect(x + 4, y + 8, 1, 1, heartsColor)
 
         # display diamond icon
         elif cardData[0] == -1:
-            displayDiamond(x, y)
+
+            # layer 0
+            fill_rect(x + 4, y, 1, 1, diamondsColor)
+
+            # layer 1
+            fill_rect(x + 3, y + 1, 3, 1, diamondsColor)
+
+            # layer 2
+            fill_rect(x + 2, y + 2, 5, 1, diamondsColor)
+
+            # layer 3
+            fill_rect(x + 1, y + 3, 7, 1, diamondsColor)
+
+            # layer 4
+            fill_rect(x, y + 4, 9, 1, diamondsColor)
+
+            # layer 5
+            fill_rect(x + 1, y + 5, 7, 1, diamondsColor)
+
+            # layer 6
+            fill_rect(x + 2, y + 6, 5, 1, diamondsColor)
+
+            # layer 7
+            fill_rect(x + 3, y + 7, 3, 1, diamondsColor)
+
+            # layer 8
+            fill_rect(x + 4, y + 8, 1, 1, diamondsColor)
 
         # display club icon
         elif cardData[0] == 0:
-            displayClub(x, y)
+
+            # layer 0
+            fill_rect(x + 2, y, 5, 1, clubsColor)
+
+            # layer 1
+            fill_rect(x + 2, y + 1, 5, 1, clubsColor)
+
+            # layer 2
+            fill_rect(x, y + 2, 2, 1, clubsColor)
+            fill_rect(x + 3, y + 2, 3, 1, clubsColor)
+            fill_rect(x + 7, y + 2, 2, 1, clubsColor)
+
+            # layer 3
+            fill_rect(x, y + 3, 3, 1, clubsColor)
+            fill_rect(x + 4, y + 3, 1, 1, clubsColor)
+            fill_rect(x + 6, y + 3, 3, 1, clubsColor)
+
+            # layer 4
+            fill_rect(x, y + 4, 9, 1, clubsColor)
+
+            # layer 5
+            fill_rect(x, y + 5, 3, 1, clubsColor)
+            fill_rect(x + 4, y + 5, 1, 1, clubsColor)
+            fill_rect(x + 6, y + 5, 3, 1, clubsColor)
+
+            # layer 6
+            fill_rect(x, y + 6, 2, 1, clubsColor)
+            fill_rect(x + 4, y + 6, 1, 1, clubsColor)
+            fill_rect(x + 7, y + 6, 2, 1, clubsColor)
+
+            # layer 7
+            fill_rect(x + 4, y + 7, 1, 1, clubsColor)
+
+            # layer 8
+            fill_rect(x + 3, y + 8, 3, 1, clubsColor)
 
         # display spade icon
         elif cardData[0] == 1:
-            displaySpade(x, y)
+
+            # layer 0
+            fill_rect(x + 4, y, 1, 1, spadesColor)
+
+            # layer 1
+            fill_rect(x + 3, y + 1, 3, 1, spadesColor)
+
+            # layer 2
+            fill_rect(x + 2, y + 2, 5, 1, spadesColor)
+
+            # layer 3
+            fill_rect(x + 1, y + 3, 7, 1, spadesColor)
+
+            # layer 4
+            fill_rect(x, y + 4, 9, 1, spadesColor)
+
+            # layer 5
+            fill_rect(x, y + 5, 9, 1, spadesColor)
+
+            # layer 6
+            fill_rect(x, y + 6, 9, 1, spadesColor)
+
+            # layer 7
+            fill_rect(x + 1, y + 7, 2, 1, spadesColor)
+            fill_rect(x + 4, y + 7, 1, 1, spadesColor)
+            fill_rect(x + 6, y + 7, 2, 1, spadesColor)
+
+            # layer 8
+            fill_rect(x + 3, y + 8, 3, 1, spadesColor)
 
     # just show the back of the card instead
     else:
@@ -450,18 +568,6 @@ def displayDrawPile(pile):
         fill_rect(drawPileX, drawPileY, horizontalWidthOfCard, verticalHeightOfCard, gameBackgroundColor)
 
 
-# displays everything on board
-def displayBoard(deckInfo, aceInfo):
-    # color the background
-    fill_rect(0, 0, 320, 222, gameBackgroundColor)
-
-    # display draw pile
-    displayDrawPile(deckInfo)
-
-    # display the ace piles
-    displayAceStacks(aceInfo)
-
-
 # creates an outline
 def outLine(columnIndex, fromRow, toRow, c):
     # x coordinate where we start drawing
@@ -483,150 +589,6 @@ def outLine(columnIndex, fromRow, toRow, c):
 
     # bottom outline
     fill_rect(x - outLineWidth, y1 + yDistance - outLineWidth, horizontalWidthOfCard + outLineWidth, outLineWidth, c)
-
-
-# heart icon for cards
-def displayHeart(x, y):
-    x += xSpaceForIcons
-    y += ySpaceForIcons
-
-    # layer 0
-    fill_rect(x + 1, y, 2, 1, heartsColor)
-    fill_rect(x + 6, y, 2, 1, heartsColor)
-
-    # layer 1
-    fill_rect(x, y + 1, 4, 1, heartsColor)
-    fill_rect(x + 5, y + 1, 4, 1, heartsColor)
-
-    # layer 2
-    fill_rect(x, y + 2, 9, 1, heartsColor)
-
-    # layer 3
-    fill_rect(x, y + 3, 9, 1, heartsColor)
-
-    # layer 4
-    fill_rect(x, y + 4, 9, 1, heartsColor)
-
-    # layer 5
-    fill_rect(x + 1, y + 5, 7, 1, heartsColor)
-
-    # layer 6
-    fill_rect(x + 2, y + 6, 5, 1, heartsColor)
-
-    # layer 7
-    fill_rect(x + 3, y + 7, 3, 1, heartsColor)
-
-    # layer 8
-    fill_rect(x + 4, y + 8, 1, 1, heartsColor)
-
-
-# diamond icon for cards
-def displayDiamond(x, y):
-    x += xSpaceForIcons
-    y += ySpaceForIcons
-
-    # layer 0
-    fill_rect(x + 4, y, 1, 1, diamondsColor)
-
-    # layer 1
-    fill_rect(x + 3, y + 1, 3, 1, diamondsColor)
-
-    # layer 2
-    fill_rect(x + 2, y + 2, 5, 1, diamondsColor)
-
-    # layer 3
-    fill_rect(x + 1, y + 3, 7, 1, diamondsColor)
-
-    # layer 4
-    fill_rect(x, y + 4, 9, 1, diamondsColor)
-
-    # layer 5
-    fill_rect(x + 1, y + 5, 7, 1, diamondsColor)
-
-    # layer 6
-    fill_rect(x + 2, y + 6, 5, 1, diamondsColor)
-
-    # layer 7
-    fill_rect(x + 3, y + 7, 3, 1, diamondsColor)
-
-    # layer 8
-    fill_rect(x + 4, y + 8, 1, 1, diamondsColor)
-
-
-# club icon for cards
-def displayClub(x, y):
-    x += xSpaceForIcons
-    y += ySpaceForIcons
-
-    # layer 0
-    fill_rect(x + 2, y, 5, 1, clubsColor)
-
-    # layer 1
-    fill_rect(x + 2, y + 1, 5, 1, clubsColor)
-
-    # layer 2
-    fill_rect(x, y + 2, 2, 1, clubsColor)
-    fill_rect(x + 3, y + 2, 3, 1, clubsColor)
-    fill_rect(x + 7, y + 2, 2, 1, clubsColor)
-
-    # layer 3
-    fill_rect(x, y + 3, 3, 1, clubsColor)
-    fill_rect(x + 4, y + 3, 1, 1, clubsColor)
-    fill_rect(x + 6, y + 3, 3, 1, clubsColor)
-
-    # layer 4
-    fill_rect(x, y + 4, 9, 1, clubsColor)
-
-    # layer 5
-    fill_rect(x, y + 5, 3, 1, clubsColor)
-    fill_rect(x + 4, y + 5, 1, 1, clubsColor)
-    fill_rect(x + 6, y + 5, 3, 1, clubsColor)
-
-    # layer 6
-    fill_rect(x, y + 6, 2, 1, clubsColor)
-    fill_rect(x + 4, y + 6, 1, 1, clubsColor)
-    fill_rect(x + 7, y + 6, 2, 1, clubsColor)
-
-    # layer 7
-    fill_rect(x + 4, y + 7, 1, 1, clubsColor)
-
-    # layer 8
-    fill_rect(x + 3, y + 8, 3, 1, clubsColor)
-
-
-# spade icon for cards
-def displaySpade(x, y):
-    x += xSpaceForIcons
-    y += ySpaceForIcons
-
-    # layer 0
-    fill_rect(x + 4, y, 1, 1, spadesColor)
-
-    # layer 1
-    fill_rect(x + 3, y + 1, 3, 1, spadesColor)
-
-    # layer 2
-    fill_rect(x + 2, y + 2, 5, 1, spadesColor)
-
-    # layer 3
-    fill_rect(x + 1, y + 3, 7, 1, spadesColor)
-
-    # layer 4
-    fill_rect(x, y + 4, 9, 1, spadesColor)
-
-    # layer 5
-    fill_rect(x, y + 5, 9, 1, spadesColor)
-
-    # layer 6
-    fill_rect(x, y + 6, 9, 1, spadesColor)
-
-    # layer 7
-    fill_rect(x + 1, y + 7, 2, 1, spadesColor)
-    fill_rect(x + 4, y + 7, 1, 1, spadesColor)
-    fill_rect(x + 6, y + 7, 2, 1, spadesColor)
-
-    # layer 8
-    fill_rect(x + 3, y + 8, 3, 1, spadesColor)
 
 
 startX = 10
